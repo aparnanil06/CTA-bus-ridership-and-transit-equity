@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CTA Transit Equity Chatbot – TE 440</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #0a0e1a; color: #e8eaf0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  .header { padding: 14px 20px; background: #0f1424; border-bottom: 1px solid #1e2540; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .logo { width: 36px; height: 36px; background: linear-gradient(135deg, #3b82f6, #06b6d4); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: white; }
+  .header-text h1 { font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700; color: #e8eaf0; letter-spacing: 0.05em; }
+  .header-text p { font-size: 11px; color: #6b7a99; margin-top: 1px; }
+  .badge { margin-left: auto; background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #60a5fa; font-size: 10px; font-family: 'Space Mono', monospace; padding: 3px 8px; border-radius: 4px; }
+  .chat-area { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+  .chat-area::-webkit-scrollbar { width: 4px; }
+  .chat-area::-webkit-scrollbar-thumb { background: #1e2540; border-radius: 2px; }
+  .msg { display: flex; gap: 10px; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.user { flex-direction: row-reverse; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; font-family: 'Space Mono', monospace; font-weight: 700; }
+  .msg.bot .avatar { background: linear-gradient(135deg, #3b82f6, #06b6d4); color: white; }
+  .msg.user .avatar { background: #1e2540; color: #6b7a99; }
+  .bubble { max-width: 82%; padding: 10px 13px; border-radius: 10px; font-size: 13px; line-height: 1.6; }
+  .msg.bot .bubble { background: #131829; border: 1px solid #1e2540; color: #d0d4e8; }
+  .msg.user .bubble { background: linear-gradient(135deg, #1d4ed8, #0891b2); color: white; }
+  .bubble strong { color: #60a5fa; }
+  .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .stat { background: #0a0e1a; border: 1px solid #1e2540; border-radius: 6px; padding: 5px 9px; font-family: 'Space Mono', monospace; font-size: 10px; color: #6b7a99; }
+  .stat span { color: #3b82f6; display: block; font-size: 14px; font-weight: 700; margin-top: 1px; }
+  .suggestions { padding: 8px 16px; display: flex; gap: 7px; flex-wrap: wrap; background: #0a0e1a; border-top: 1px solid #0f1424; flex-shrink: 0; }
+  .suggestion-label { font-size: 10px; color: #6b7a99; width: 100%; font-family: 'Space Mono', monospace; }
+  .chip { background: #0f1424; border: 1px solid #1e2540; color: #94a3b8; padding: 4px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .chip:hover { border-color: #3b82f6; color: #60a5fa; }
+  .input-row { padding: 10px 16px; background: #0f1424; border-top: 1px solid #1e2540; display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+  textarea { flex: 1; background: #131829; border: 1px solid #1e2540; border-radius: 8px; color: #e8eaf0; font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 12px; resize: none; outline: none; max-height: 90px; line-height: 1.5; transition: border-color 0.2s; }
+  textarea:focus { border-color: #3b82f6; }
+  textarea::placeholder { color: #3a4566; }
+  .send-btn { background: linear-gradient(135deg, #3b82f6, #06b6d4); border: none; color: white; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; flex-shrink: 0; }
+  .send-btn:hover { opacity: 0.85; }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .typing { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+  .typing span { width: 6px; height: 6px; background: #3b82f6; border-radius: 50%; animation: bounce 1.2s ease infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+  .key-note { font-size: 11px; color: #3a4566; text-align: center; padding: 4px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">CTA</div>
+  <div class="header-text">
+    <h1>TRANSIT EQUITY ANALYST</h1>
+    <p>Chicago CTA Bus Ridership · TE 440 Final Project · Aparna Kudiyirikkal Anil</p>
+  </div>
+  <div class="badge">AI-POWERED</div>
+</div>
+
+<div class="chat-area" id="chat">
+  <div class="msg bot">
+    <div class="avatar">AI</div>
+    <div class="bubble">
+      <strong>Hello! I'm the CTA Transit Equity Chatbot.</strong><br><br>
+      I can answer questions about Chicago bus ridership trends, population demographics, and transit equity implications. This project analyzed two public datasets from the Chicago Data Portal:
+      <div class="stat-row">
+        <div class="stat">CTA Ridership<span>1.1M rows</span></div>
+        <div class="stat">Population<span>235 rows</span></div>
+        <div class="stat">Routes<span>190</span></div>
+        <div class="stat">R² Score<span>0.60</span></div>
+      </div>
+      <br>Ask me anything about the data, findings, or what they mean for transit equity in Chicago!
+    </div>
+  </div>
+</div>
+
+<div class="suggestions">
+  <div class="suggestion-label">TRY ASKING →</div>
+  <div class="chip" onclick="ask(this.textContent)">What happened to ridership during COVID?</div>
+  <div class="chip" onclick="ask(this.textContent)">What did K-Means clustering reveal?</div>
+  <div class="chip" onclick="ask(this.textContent)">What does the ARIMA forecast show?</div>
+  <div class="chip" onclick="ask(this.textContent)">How do demographics relate to ridership?</div>
+  <div class="chip" onclick="ask(this.textContent)">What are your policy recommendations?</div>
+  <div class="chip" onclick="ask(this.textContent)">Which communities are most at risk?</div>
+</div>
+
+<div class="input-row">
+  <textarea id="input" placeholder="Ask about Chicago transit data..." rows="1"
+    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+    oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,90)+'px'"></textarea>
+  <button class="send-btn" id="sendBtn" onclick="sendMsg()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+  </button>
+</div>
+<div class="key-note">Press Enter to send · Shift+Enter for new line</div>
+
+<script>
+const SYSTEM = `You are the CTA Transit Equity Chatbot for a TE 440 (Technology & Innovation / Engineering City Scholars) final project at UIUC by Aparna Kudiyirikkal Anil. You analyze two Chicago public datasets: CTA Bus Routes Daily Totals by Route (1,099,750 rows: route, date, daytype, rides) and Chicago Population Counts (235 rows, ZIP codes 2018-2021, columns: Year, Geography, Population-Total, Age 0-17, Age 18-29, Age 65+).
+
+RESEARCH QUESTION: How has CTA bus ridership changed over time relative to Chicago population demographics, and what are the equity implications for underserved communities?
+
+MILESTONE 1 - Exploratory Data Analysis:
+- Ridership peaked around 2008 (~245M annual rides) then declined steadily through the 2010s before COVID.
+- COVID-19 caused a sharp ridership crash in 2020, dropping to roughly half of 2019 levels.
+- Post-pandemic recovery is real but ridership remains about 20% below pre-2019 levels, suggesting structural change beyond just COVID.
+- Weekday ridership averages ~5,013 rides/route/day vs Saturday ~3,800 and Sunday/Holiday ~2,650. The CTA primarily serves commuters.
+- Data cleaning: rides column stored as comma-formatted strings, required conversion. Removed ~47,989 outlier rows (4.4%) via IQR method. Mean rides/route/day = 5,013, median = 3,404 (right-skewed distribution).
+
+MILESTONE 2 - Regression and Clustering:
+- LINEAR REGRESSION on monthly totals: coefficient = -49,732 rides/month, R2=0.60. This is a sustained structural decline that explains 60% of ridership variance, and was happening well before COVID.
+- K-MEANS CLUSTERING (3 clusters, 190 routes): Cluster 0 = low-ridership ~1,578 avg daily rides (neighborhood routes, likely underserved areas, 57% of all routes), Cluster 1 = medium ~7,997 avg daily rides (local routes), Cluster 2 = high-ridership ~16,304 avg daily rides (major commuter corridors). The gap between Cluster 0 and Cluster 2 is roughly 10x, revealing severe resource concentration.
+
+MILESTONE 3 - ARIMA Forecasting, Demographic Regression, and Policy Dashboard:
+- ARIMA TIME-SERIES FORECAST: Fit an ARIMA(2,1,2) model after confirming a unit root with the Augmented Dickey-Fuller test. The model forecasts ridership stabilizing around 15 million rides per month over the next 24 months. That is still approximately 25% below pre-pandemic levels, meaning ridership is not expected to fully recover without intentional service investment.
+- DEMOGRAPHIC REGRESSION: Tested whether ZIP code age demographics predict bus ridership. The 65+ population share showed the strongest positive correlation with ridership, meaning routes in elderly-dense ZIP codes tend to have higher ridership. This directly confirms the equity argument: the communities most physically dependent on transit are riding the bus most. Age 0-17 share showed a slight positive trend. Age 18-29 share was nearly flat with limited predictive power.
+- ROUTE-TO-ZIP APPROXIMATION: Routes were mapped to ZIP codes using a weighted approximation. This is an acknowledged limitation; a production version would use CTA GTFS stop density data for more precise mapping.
+- POLICY DASHBOARD: A multi-panel visualization designed for non-technical audiences showing the annual ridership trend, route cluster breakdown, the 10x ridership gap between neighborhood and commuter routes, and day-type demand patterns.
+
+POLICY RECOMMENDATIONS:
+1. Protect Cluster 0 routes by cross-referencing them with ZIP codes that have high 65+ and 0-17 population shares before any service cuts are made.
+2. Reinforce Cluster 2 commuter corridors with increased peak-hour frequency to improve reliability for the most-used routes.
+3. Use ARIMA recovery benchmarks to set data-driven targets and trigger automatic service reviews if monthly ridership stalls below 17 million.
+4. Publish route-cluster designations publicly so community advocates can use the data to resist harmful cuts in underserved neighborhoods.
+
+CITY SCHOLARS CONNECTION: urban equity, data-driven policymaking, public infrastructure as a mechanism of economic opportunity in Chicago.
+
+Answer conversationally and concisely. Be specific with numbers. Keep responses under 200 words unless the question genuinely requires more detail.`;
+
+let history = [];
+
+function ask(text) {
+  document.getElementById('input').value = text;
+  sendMsg();
+}
+
+async function sendMsg() {
+  const input = document.getElementById('input');
+  const text = input.value.trim();
+  if (!text) return;
+  addMsg('user', text);
+  history.push({ role: 'user', content: text });
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+  const tid = addTyping();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': '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', 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: SYSTEM, messages: history })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Sorry, could not generate a response.';
+    removeTyping(tid);
+    addMsg('bot', reply);
+    history.push({ role: 'assistant', content: reply });
+  } catch(e) {
+    removeTyping(tid);
+    addMsg('bot', 'Connection error — make sure you have internet access and try again.');
+  }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function addMsg(role, text) {
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  div.innerHTML = `<div class="avatar">${role==='bot'?'AI':'YOU'}</div><div class="bubble">${formatted}</div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addTyping() {
+  const chat = document.getElementById('chat');
+  const id = 'typing-' + Date.now();
+  const div = document.createElement('div');
+  div.className = 'msg bot'; div.id = id;
+  div.innerHTML = `<div class="avatar">AI</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) { const el = document.getElementById(id); if(el) el.remove(); }
+</script>
+</body>
+</html>
